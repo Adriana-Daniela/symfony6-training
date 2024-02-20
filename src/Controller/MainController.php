@@ -2,25 +2,40 @@
 
 namespace App\Controller;
 
+use App\Dto\Contact;
+use App\Form\ContactType;
+use App\Repository\MovieRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 class MainController extends AbstractController
 {
     #[Route('/', name: 'app_main_index')]
-    public function index(): Response
+    public function index(MovieRepository $repository): Response
     {
         return $this->render('main/index.html.twig', [
-            'controller_name' => 'Index',
+            'movies' => $repository->findBy([], ['id' => 'DESC'], 6)
         ]);
     }
 
     #[Route('/contact', name: 'app_main_contact')]
-    public function contact(): Response
+    public function contact(Request $request): Response
     {
+        $dto = new Contact();
+        $form = $this->createForm(ContactType::class, $dto);
+
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            dump($dto);
+            $this->addFlash('info', 'Your message has been sent');
+
+            return $this->redirectToRoute('app_main_contact');
+        }
+
         return $this->render('main/contact.html.twig', [
-            'controller_name' => 'Contact',
+            'form' => $form,
         ]);
     }
 }

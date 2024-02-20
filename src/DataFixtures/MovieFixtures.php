@@ -2,49 +2,48 @@
 
 namespace App\DataFixtures;
 
+use App\Entity\Genre;
 use App\Entity\Movie;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
-use Symfony\Component\Finder\Finder;
 
 class MovieFixtures extends Fixture
 {
+    use FixtureFileImporterTrait;
+
     public function load(ObjectManager $manager): void
     {
-        // $product = new Product();
-        // $manager->persist($product);
+        foreach ($this->getMovies() as $movie) {
+            $manager->persist($movie);
+        }
 
         $manager->flush();
     }
 
-    private function getMovies(): iterable
+    public function getMovies(): iterable
     {
-        foreach ($this->getMoviesData() as $moviesDatum) {
+        $genres = [];
+        foreach ($this->getData('movie_fixtures.json') as $datum) {
+            $date = $datum['Released'] === 'N/A' ? $datum['Year'] : $datum['Released'];
+
             $movie = (new Movie())
-                ->setTitle($moviesDatum['title'])
-                ->setPlot($moviesDatum['plot'])
-                ->setCountry($moviesDatum['country'])
-                ->setPrice($moviesDatum['price'])
-                ->setPoster($moviesDatum['poster'])
-                ->setReleasedAt($moviesDatum['releasedAt']);
+                ->setTitle($datum['Title'])
+                ->setPlot($datum['Plot'])
+                ->setCountry($datum['Country'])
+                ->setReleasedAt(new \DateTimeImmutable($date))
+                ->setPoster($datum['Poster'])
+                ->setPrice(5.0)
+                //->setRated($datum['Rated'])
+                //->setImdbId($datum['imdbID'])
+            ;
 
-            
-        }
-    }
-
-    private function getMoviesData(): iterable
-    {
-        $files = (new Finder())
-            ->in(__DIR__)
-            ->files()
-            ->name('movies_fixtures.json');
-
-        foreach ($files as $file) {
-            $content = $file->getContents();
-
-            foreach (\json_decode($content, true) as $data) {
-                yield $data;
+            foreach (explode(', ', $datum['Genre']) as $genreName) {
+                $genre = $genres[$genreName]
+                    ?? $genres[$genreName] = (new Genre())->setName($genreName);
+                $movie->addGenre($genre);
             }
+
+            yield $movie;
         }
     }
 }
