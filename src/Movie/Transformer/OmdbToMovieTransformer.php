@@ -13,6 +13,8 @@ class OmdbToMovieTransformer implements OmdbTransformerInterface
         'Plot',
         'Country',
         'Poster',
+        'Rated',
+        'imdbID',
     ];
 
     public function transform(array|string $value): Movie
@@ -29,6 +31,8 @@ class OmdbToMovieTransformer implements OmdbTransformerInterface
             ->setCountry($value['Country'])
             ->setReleasedAt(new \DateTimeImmutable($date))
             ->setPoster($value['Poster'])
+            ->setRated($value['Rated'])
+            ->setImdbId($value['imdbID'])
             ->setPrice(5.0)
             ;
     }

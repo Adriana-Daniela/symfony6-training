@@ -29,10 +29,12 @@ class MovieRepository extends ServiceEntityRepository
         $where = SearchType::Id === $type
             ? 'm.imdbId = :value'
             : $qb->expr()->like('m.title', ':value');
+        $param = SearchType::Id === $type ? $value : "%$value%";
 
         return $qb->andWhere($where)
-            ->setParameter('value', "%$value%")
+            ->setParameter('value', $param)
             ->orderBy('m.releasedAt', 'ASC')
+            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
     }
