@@ -23,7 +23,7 @@ class BookEditVoter extends Voter
     {
         $user = $token->getUser();
         if (!$user instanceof User) {
-            return \in_array('ROLE_ADMIN', $token->getRoleNames());
+            return false;
         }
 
         /** @var Book $subject */

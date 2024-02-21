@@ -8,11 +8,14 @@ use App\Form\MovieType;
 use App\Movie\Enum\SearchType;
 use App\Movie\Provider\MovieProvider;
 use App\Repository\MovieRepository;
+use App\Security\Voter\MovieVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\ValueResolver;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/movie')]
 class MovieController extends AbstractController
@@ -25,6 +28,7 @@ class MovieController extends AbstractController
         ]);
     }
 
+    #[IsGranted(MovieVoter::RATED, 'movie')]
     #[Route('/{id<\d+>}', name: 'app_movie_show', methods: ['GET'])]
     public function show(?Movie $movie): Response
     {
@@ -33,11 +37,12 @@ class MovieController extends AbstractController
         ]);
     }
 
+    #[IsGranted(MovieVoter::RATED, 'movie')]
     #[Route('/omdb/{title}', name: 'app_movie_omdb', methods: ['GET'])]
-    public function omdb(string $title, MovieProvider $provider): Response
+    public function omdb(#[ValueResolver('movie_title')] ?Movie $movie): Response
     {
         return $this->render('movie/show.html.twig', [
-            'movie' => $provider->getMovie(SearchType::Title, $title),
+            'movie' => $movie,
         ]);
     }
 
@@ -45,6 +50,9 @@ class MovieController extends AbstractController
     #[Route('/{id<\d+>}/edit', name: 'app_movie_edit', methods: ['GET', 'POST'])]
     public function save(Request $request, EntityManagerInterface $manager, ?Movie $movie): Response
     {
+        if ($movie) {
+            $this->denyAccessUnlessGranted(MovieVoter::EDIT, $movie);
+        }
         $movie ??= new Movie();
 
         $form = $this->createForm(MovieType::class, $movie);
