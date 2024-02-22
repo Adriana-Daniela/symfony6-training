@@ -10,6 +10,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
+#[ORM\ChangeTrackingPolicy('DEFERRED_EXPLICIT')]
 #[UniqueEntity(fields: ['email'], message: 'There is already an account with this email')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -39,6 +40,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?\DateTimeImmutable $birthday = null;
 
     private ?int $age = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $lastConnectedAt = null;
 
     public function getId(): ?int
     {
@@ -145,5 +149,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getAge(): ?int
     {
         return $this->age ??= $this->birthday?->diff(new \DateTimeImmutable())->y;
+    }
+
+    public function getLastConnectedAt(): ?\DateTimeImmutable
+    {
+        return $this->lastConnectedAt;
+    }
+
+    public function setLastConnectedAt(?\DateTimeImmutable $lastConnectedAt): static
+    {
+        $this->lastConnectedAt = $lastConnectedAt;
+
+        return $this;
     }
 }
